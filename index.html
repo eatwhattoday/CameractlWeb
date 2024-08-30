@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摄像头监控</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-top: 20px;
+        }
+        img {
+            border: 2px solid #333;
+            width: 640px;
+            height: 480px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .controls button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            color: white;
+            background-color: #007BFF;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+        .arrow-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .arrow-controls .arrow {
+            display: grid;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px 50px;
+            grid-gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        .arrow-controls button {
+            padding: 10px;
+            font-size: 18px;
+            border-radius: 50%;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+        }
+        .arrow-controls button:hover {
+            background-color: #0056b3;
+        }
+        .arrow-controls button:active {
+            background-color: #003f7f;
+        }
+        .circle {
+            grid-area: 2 / 2;
+        }
+        .up {
+            grid-area: 1 / 2;
+        }
+        .down {
+            grid-area: 3 / 2;
+        }
+        .left {
+            grid-area: 2 / 1;
+        }
+        .right {
+            grid-area: 2 / 3;
+        }
+    </style>
+</head>
+<body>
+    <h1>摄像头实时监控</h1>
+
+    <!-- 实时视频流 -->
+    <img id="cameraStream" src="http://localhost:8080/?action=stream" alt="Camera Stream">
+
+    <!-- 控制区域 -->
+    <div class="controls">
+        <button onclick="takePhoto()">拍照</button>
+        <button onclick="startVideo()">开始录像</button>
+        <button onclick="stopVideo()">停止录像</button>
+	 <button onclick="goToGallery()">相册</button> <!-- 新增的相册按钮 -->
+    </div>
+
+    <!-- 箭头按钮区域 -->
+    <div class="arrow-controls">
+        <div class="arrow">
+            <button class="up" onclick="moveUp()">↑</button>
+            <button class="left" onclick="moveLeft()">←</button>
+            <button class="circle" onclick="circleClick()">⭘</button>
+            <button class="right" onclick="moveRight()">→</button>
+            <button class="down" onclick="moveDown()">↓</button>
+        </div>
+    </div>
+
+    <!-- 状态显示 -->
+    <div id="status" class="status"></div>
+
+    <script>
+        let recording = false;
+
+        // 调用 CGI 脚本拍照
+        function takePhoto() {
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '正在拍照...';
+
+            fetch('/cgi-bin/take_photo.sh')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusElement.innerHTML = '拍照成功: ' + data.filepath;
+                    } else {
+                        statusElement.innerHTML = '拍照失败';
+                    }
+                })
+                .catch(error => {
+                    statusElement.innerHTML = '发生错误: ' + error;
+                });
+        }
+
+        // 调用 CGI 脚本开始录像
+        function startVideo() {
+            if (recording) {
+                alert("正在录像，请先停止当前录像。");
+                return;
+            }
+
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '正在录像...';
+
+            fetch('/cgi-bin/start_video.sh')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusElement.innerHTML = '录像开始: ' + data.filepath;
+                        recording = true;
+                    } else {
+                        statusElement.innerHTML = '录像启动失败';
+                    }
+                })
+                .catch(error => {
+                    statusElement.innerHTML = '发生错误: ' + error;
+                });
+        }
+
+        // 调用 CGI 脚本停止录像
+        function stopVideo() {
+            if (!recording) {
+                alert("当前没有正在进行的录像。");
+                return;
+            }
+
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '正在停止录像...';
+
+            fetch('/cgi-bin/stop_video.sh')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusElement.innerHTML = '录像完成: ' + data.filepath;
+                        recording = false;
+                    } else {
+                        statusElement.innerHTML = '停止录像失败';
+                    }
+                })
+                .catch(error => {
+                    statusElement.innerHTML = '发生错误: ' + error;
+                });
+        }
+	
+	function goToGallery() {
+   		 window.location.href = "/gallery.html"; // 跳转到相册页面
+	}
+
+        // 移动摄像头的功能
+        function moveUp() {
+            alert("上移");
+        }
+
+        function moveDown() {
+            alert("下移");
+        }
+
+        function moveLeft() {
+            alert("左移");
+        }
+
+        function moveRight() {
+            alert("右移");
+        }
+
+        function circleClick() {
+            alert("中间按钮");
+        }
+    </script>
+</body>
+</html>
+

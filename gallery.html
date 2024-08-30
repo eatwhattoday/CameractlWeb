@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相册</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            justify-items: center;
+        }
+        .gallery img, .gallery video {
+            width: 200px;
+            height: auto;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .gallery img:hover, .gallery video:hover {
+            transform: scale(1.1);
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+        .pagination a {
+            margin: 0 5px;
+            text-decoration: none;
+            color: #333;
+        }
+        .pagination a.active {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>相册</h1>
+    <div class="gallery" id="gallery-container">
+        <!-- 缩略图会在这里加载 -->
+    </div>
+    <div class="pagination" id="pagination-container">
+        <!-- 分页按钮会在这里加载 -->
+    </div>
+
+    <script>
+        function loadGallery(page = 1) {
+            fetch(`/cgi-bin/generate_gallery.sh?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    const galleryContainer = document.getElementById('gallery-container');
+                    const paginationContainer = document.getElementById('pagination-container');
+                    
+                    galleryContainer.innerHTML = '';
+                    paginationContainer.innerHTML = '';
+
+                    data.files.forEach(file => {
+                        const link = document.createElement('a');
+                        link.href = file.url;
+                        link.target = '_blank';
+                        link.innerHTML = `<img src="${file.thumbnail}" alt="${file.name}"><br>${file.name}`;
+                        galleryContainer.appendChild(link);
+                    });
+
+                    for (let i = 1; i <= data.totalPages; i++) {
+                        const pageLink = document.createElement('a');
+                        pageLink.href = '#';
+                        pageLink.innerText = i;
+                        if (i === page) {
+                            pageLink.className = 'active';
+                        }
+                        pageLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            loadGallery(i);
+                        });
+                        paginationContainer.appendChild(pageLink);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载失败:', error);
+                });
+        }
+
+        window.onload = () => {
+            loadGallery(1);
+        };
+    </script>
+</body>
+</html>
+
